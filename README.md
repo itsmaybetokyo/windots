@@ -1,2 +1,2 @@
 # windots
-windows oconfiguration files
+pesonal config files for glaze, autohotkey scripts and more
