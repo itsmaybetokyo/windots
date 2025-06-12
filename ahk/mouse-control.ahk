@@ -33,16 +33,15 @@ EnterNormalMode()
 CreateModeIndicator() {
     global modeIndicator := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
     modeIndicator.BackColor := "000000"
-    global modeText := modeIndicator.Add("Text", "cFFFFFF w100 h50 Right", "⌘")
+    global modeText := modeIndicator.Add("Text", "cFFFFFF w100 h50 Right", "mouse ⌘")
     modeText.SetFont("s30 bold", "BIZ UDPGothic")
 
-    screenWidth := A_ScreenWidth
-    screenHeight := A_ScreenHeight
-    xPos := screenWidth - 110
-    yPos := screenHeight - 50
+    MonitorGet 1, , , &screenWidth, &screenHeight
+    xPos := screenWidth - 140
+    yPos := screenHeight - 60
 
     modeIndicator.Show("x" xPos " y" yPos " NoActivate")
-    WinSetTransColor("000000 100", modeIndicator)
+    WinSetTransColor("000000 200", modeIndicator)
 }
 
 CreateCentralIndicators() {
@@ -58,8 +57,10 @@ CreateCentralIndicators() {
         monitorIndex := A_Index
         indicatorGui := Gui("+AlwaysOnTop -Caption +ToolWindow +LastFound +E0x20")
         indicatorGui.BackColor := "333333"
-        indicatorText := indicatorGui.Add("Text", "0x200 cFFFFFF w60 h62 Center vCentralText" . monitorIndex, "")
-        indicatorText.SetFont("s30 bold", "BIZ UDPGothic")
+        indicatorText := indicatorGui.Add("Text", "x-3 y-3 w64 h64 cFFFFFF 0x200 Center vCentralText" . monitorIndex,
+            ""
+        )
+        indicatorText.SetFont("s28 bold", "BIZ UDPGothic")
         WinSetTransColor("000000 200", indicatorGui)
 
         centralIndicators[monitorIndex] := { gui: indicatorGui, text: indicatorText }
@@ -82,7 +83,7 @@ ShowCentralIndicators(msg) {
         indicatorGui := indicator.gui
         indicatorText := indicator.text
 
-        MonitorGetWorkArea monitorIndex, &monLeft, &monTop, &monRight, &monBottom
+        MonitorGet monitorIndex, &monLeft, &monTop, &monRight, &monBottom
         monWidth := monRight - monLeft
         monHeight := monBottom - monTop
 
@@ -91,8 +92,8 @@ ShowCentralIndicators(msg) {
         indicatorGui.Show("x-5000 y-5000 NoActivate")
         indicatorGui.GetPos(, , &actualGuiWidth, &actualGuiHeight)
 
-        xPos := monLeft + (monWidth - actualGuiWidth) // 2
-        yPos := monTop + (monHeight - actualGuiHeight) // 2
+        xPos := Integer(monLeft + (monWidth - actualGuiWidth) / 2)
+        yPos := Integer(monTop + (monHeight - actualGuiHeight) / 2)
 
         indicatorGui.Show("NA x" . xPos . " y" . yPos . " W" . actualGuiWidth . " H" . actualGuiHeight)
         WinSetRegion("0-0 W" . actualGuiWidth . " H" . actualGuiHeight . " R20-20", indicatorGui)
@@ -100,7 +101,7 @@ ShowCentralIndicators(msg) {
 
     if (centralIndicatorTimer)
         SetTimer(HideCentralIndicators, 0)
-    centralIndicatorTimer := SetTimer(HideCentralIndicators, -1500)
+    centralIndicatorTimer := SetTimer(HideCentralIndicators, -3000)
 }
 
 HideCentralIndicators() {
