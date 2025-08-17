@@ -20,8 +20,8 @@ global DRAGGING := false
 global DOUBLE_PRESS_ACTION_IS_ACTIVE := false
 global cursorMovementTimer := 0
 
-global modeIndicator := 0
-global modeText := 0
+global modeIndicators := []
+global modeTexts := []
 global centralIndicators := []
 global centralIndicatorTimer := 0
 
@@ -31,17 +31,36 @@ CreateCentralIndicators()
 EnterNormalMode()
 
 CreateModeIndicator() {
-    global modeIndicator := Gui("+AlwaysOnTop -Caption +ToolWindow +E0x20")
-    modeIndicator.BackColor := "000000"
-    global modeText := modeIndicator.Add("Text", "cFFFFFF w100 h50 Right", "mouse ⌘")
-    modeText.SetFont("s30 bold", "BIZ UDPGothic")
+    global modeIndicators, modeTexts
+    monitorCount := MonitorGetCount()
+    modeIndicators := Array()
+    modeTexts := Array()
 
-    MonitorGet 1, , , &screenWidth, &screenHeight
-    xPos := screenWidth - 140
-    yPos := screenHeight - 60
+    if (monitorCount > 0) {
+        modeIndicators.Length := monitorCount
+        modeTexts.Length := monitorCount
+    } else {
+        return
+    }
 
-    modeIndicator.Show("x" xPos " y" yPos " NoActivate")
-    WinSetTransColor("000000 200", modeIndicator)
+    loop monitorCount {
+        monitorIndex := A_Index
+        modeIndicator := Gui("+AlwaysOnTop -Caption +ToolWindow +Owner +E0x20")
+        modeIndicator.BackColor := "000000"
+        modeText := modeIndicator.Add("Text", "cFFFFFF w120 h40 Right", "mouse ⌘")
+        modeText.SetFont("s18 bold", "BIZ UDPGothic")
+
+        MonitorGet monitorIndex, &monLeft, , &monRight, &monBottom
+        xPos := monRight - 165
+        yPos := monBottom - 40
+
+        modeIndicator.Show("x" xPos " y" yPos " NoActivate")
+        WinSetTransColor("000000 200", modeIndicator)
+        WinSetAlwaysOnTop(1, modeIndicator)
+
+        modeIndicators[monitorIndex] := modeIndicator
+        modeTexts[monitorIndex] := modeText
+    }
 }
 
 CreateCentralIndicators() {
@@ -52,77 +71,46 @@ CreateCentralIndicators() {
         centralIndicators.Length := monitorCount
     else
         return
+    ;
+        loop monitorCount {
+            monitorIndex := A_Index
+            indicatorGui := Gui("+AlwaysOnTop -Caption +ToolWindow +LastFound +E0x20")
+            indicatorGui.BackColor := "333333"
+            indicatorText := indicatorGui.Add("Text", "cFFFFFF Center vCentralText" .
+                monitorIndex,
+                ""
+            )
+            indicatorText.SetFont("s20 bold", "BIZ UDPGothic")
+            WinSetTransColor("000000 200", indicatorGui)
 
-    loop monitorCount {
-        monitorIndex := A_Index
-        indicatorGui := Gui("+AlwaysOnTop -Caption +ToolWindow +LastFound +E0x20")
-        indicatorGui.BackColor := "333333"
-        indicatorText := indicatorGui.Add("Text", "x-3 y-3 w64 h64 cFFFFFF 0x200 Center vCentralText" . monitorIndex,
-            ""
-        )
-        indicatorText.SetFont("s28 bold", "BIZ UDPGothic")
-        WinSetTransColor("000000 200", indicatorGui)
-
-        centralIndicators[monitorIndex] := { gui: indicatorGui, text: indicatorText }
-    }
-}
-
-ShowCentralIndicators(msg) {
-    global centralIndicators, centralIndicatorTimer
-    if !centralIndicators.Length
-        CreateCentralIndicators()
-
-    monitorCount := MonitorGetCount()
-
-    loop monitorCount {
-        monitorIndex := A_Index
-        if !centralIndicators.Has(monitorIndex)
-            continue
-
-        indicator := centralIndicators[monitorIndex]
-        indicatorGui := indicator.gui
-        indicatorText := indicator.text
-
-        MonitorGet monitorIndex, &monLeft, &monTop, &monRight, &monBottom
-        monWidth := monRight - monLeft
-        monHeight := monBottom - monTop
-
-        indicatorText.Value := msg
-
-        indicatorGui.Show("x-5000 y-5000 NoActivate")
-        indicatorGui.GetPos(, , &actualGuiWidth, &actualGuiHeight)
-
-        xPos := Integer(monLeft + (monWidth - actualGuiWidth) / 2)
-        yPos := Integer(monTop + (monHeight - actualGuiHeight) / 2)
-
-        indicatorGui.Show("NA x" . xPos . " y" . yPos . " W" . actualGuiWidth . " H" . actualGuiHeight)
-        WinSetRegion("0-0 W" . actualGuiWidth . " H" . actualGuiHeight . " R20-20", indicatorGui)
-    }
-
-    if (centralIndicatorTimer)
-        SetTimer(HideCentralIndicators, 0)
-    centralIndicatorTimer := SetTimer(HideCentralIndicators, -3000)
-}
-
-HideCentralIndicators() {
-    global centralIndicators, centralIndicatorTimer
-    if centralIndicators.Length {
-        for index, indicator in centralIndicators {
-            indicator.gui.Hide()
+            centralIndicators[monitorIndex] := { gui: indicatorGui, text: indicatorText }
         }
-    }
-    centralIndicatorTimer := 0
 }
 
 UpdateModeIndicator(mode) {
-    if (InStr(mode, "MOUSE") || InStr(mode, "VIM")) {
-        modeText.SetFont("cFFFFFFF")
-    } else {
-        modeText.SetFont("cFFFFFFF")
-    }
-    modeText.Value := mode
+    global modeIndicators, modeTexts
 
-    ShowCentralIndicators(mode)
+    if (!modeIndicators.Length)
+        CreateModeIndicator()
+
+    loop modeIndicators.Length {
+        monitorIndex := A_Index
+        if (!modeTexts.Has(monitorIndex) || !modeIndicators.Has(monitorIndex))
+            continue
+
+        modeText := modeTexts[monitorIndex]
+        modeIndicator := modeIndicators[monitorIndex]
+
+        if (InStr(mode, "MOUSE") || InStr(mode, "VIM")) {
+            modeText.SetFont("cFFFFFFF")
+        } else {
+            modeText.SetFont("cFFFFFFF")
+        }
+        modeText.Value := mode
+
+        ; Asegurar que el indicador esté siempre encima
+        WinSetAlwaysOnTop(1, modeIndicator)
+    }
 }
 
 Accelerate(velocity, pos, neg) {
@@ -184,7 +172,7 @@ EnterNormalMode(quick := false) {
     INPUT_MODE.type := CONTROL_TYPE_NAME_VIM
     INPUT_MODE.quick := quick
 
-    msg := "⌘"
+    msg := "NORMAL"
     msg := INPUT_MODE.quick ? msg . "q" : msg
 
     UpdateModeIndicator(msg)
@@ -205,7 +193,7 @@ EnterInsertMode(quick := false) {
         global DRAGGING := false
     }
 
-    msg := quick ? "~q" : "~"
+    msg := quick ? "INSERT" : "I"
 
     UpdateModeIndicator(msg)
 
@@ -369,7 +357,7 @@ ResetMouseState() {
     }
 
     EnterInsertMode(false)
-    msg := "⟳"
+    msg := "RESET"
     UpdateModeIndicator(msg)
 }
 
@@ -422,6 +410,7 @@ SC01A:: ScrollTo("up")
 SC01B:: ScrollTo("down")
 SC015:: ScrollTo("up")
 SC012:: ScrollTo("down")
+^l:: EnterInsertMode(true)
 
 /* #HotIf (INPUT_MODE.type != CONTROL_TYPE_NAME_INSERT && !INPUT_MODE.quick)
 Capslock:: EnterInsertMode(true)
