@@ -2,7 +2,6 @@ general:
   # Commands to run when the WM has started. This is useful for running a
   # script or launching another application.
   # Example: The below command launches Zebar.
-  # startup_commands: ["shell-exec 'C:/Program Files/glzr.io/Zebar/zebar.exe'"]
 
   # Commands to run just before the WM is shutdown.
   # Example: The below command kills Zebar.
@@ -44,14 +43,14 @@ gaps:
   scale_with_dpi: false
 
   # Gap between adjacent windows.
-  inner_gap: "10px"
+  inner_gap: "5px"
 
   # Gap between windows and the screen edge.
   outer_gap:
-    top: "5px"
-    right: "85px"
-    bottom: "5px"
-    left: "85px"
+    top: "20px"
+    right: "20px" #85px
+    bottom: "20px"
+    left: "20px" #85px
 
 window_effects:
   # Visual effects to apply to the focused window.
@@ -59,8 +58,8 @@ window_effects:
     # Highlight the window with a colored border.
     # ** Exclusive to Windows 11 due to API limitations.
     border:
-      enabled: false
-      color: "#FF0000"
+      enabled: true
+      color: "#fdbd94"
 
     # Remove the title bar from the window's frame. Note that this can
     # cause rendering issues for some applications.
@@ -129,7 +128,7 @@ workspaces:
 
 window_rules:
   - commands: ["ignore"]
-    ignore_keybindings: ["tab+space", "space+tab"]
+    ignore_keybindings: ["ctrl+tab"]
     match:
       # Ignores any Zebar windows.
       - window_process: { equals: "zebar" }
@@ -146,18 +145,33 @@ window_rules:
       - window_process: { equals: "Lively" }
         window_class: { regex: "HwndWrapper" }
 
+      # Ignore Voicemeeter Banana windows.
+      - window_process: { equals: "VoicemeeterBanana" }
+      - window_class: { equals: "VoicemeeterBananaMainWindow" }
+
+      # Ignore League of Legends launcher and game windows.
+      - window_process: { equals: "LeagueClientUx" } # LoL launcher
+      - window_process: { equals: "LeagueClientUxRender" } # LoL launcher render
+      - window_process: { equals: "League of Legends" } # LoL game client
+      - window_class: { equals: "RiotClientMain" } # Riot client main window
+
   - commands: ["set-floating"]
     match:
       - window_process: { equals: "Flow.Launcher" }
         window_title: { equals: "Settings" }
+      - window_process: { equals: "Stardew Valley" }
+      - window_process: { equals: "SMAPI" }
 
   - commands: []
-    ignore_keybindings: ["tab+space", "space+tab"]
+    ignore_keybindings: ["ctrl+tab"]
     match:
-      - window_process: { equals: "javaw" } # Minecraft
-      - window_process: { equals: "Minecraft" } # Minecraft
+      - window_process: { equals: "javaw" }
+      - window_title: { regex: "^Minecraft.*" }
+      - window_process: { equals: "R.E.P.O" }
       - window_process: { equals: "LeagueClientUx" } # LoL launcher
-      - window_process: { equals: "League of Legends" } # LoL game
+      - window_process: { equals: "LeagueClientUxRender" } # LoL launcher render
+      - window_process: { equals: "League of Legends" } # LoL game client
+      - window_class: { equals: "RiotClientMain" } # Riot client main window
 
 binding_modes:
   # When enabled, the focused window can be resized via arrow keys or HJKL.
@@ -177,7 +191,7 @@ binding_modes:
 
 keybindings:
   - commands: ["shell-exec C:/Users/TTTTT/Desktop/minimize_and_focus_next.exe"]
-    bindings: ["tab+space"]
+    bindings: ["ctrl+tab"]
   # Shift focus in a given direction.
   - commands: ["focus --direction left"]
     bindings: ["alt+h", "alt+left"]
@@ -221,8 +235,8 @@ keybindings:
 
   # Change tiling direction. This determines where new tiling windows will
   # be inserted.
-  - commands: ["toggle-tiling-direction"]
-    bindings: ["alt+v"]
+  # - commands: ["toggle-tiling-direction"]
+  #  bindings: ["alt+v"]
 
   #   # Change focus from tiling windows -> floating -> fullscreen.
   #   # - commands: ["wm-cycle-focus"]
@@ -261,7 +275,7 @@ keybindings:
   #     bindings: ["alt+shift+w"]
 
   #   # Launch CMD terminal. Alternatively, use `shell-exec wt` or
-  #   # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
+  #   # `shell-exec %ProgramFiles%/Git/git-bash.exe` to s   tart Windows
   # Terminal and Git Bash respectively.
   # - commands: ["shell-exec powershell"]
   # bindings: ["alt+enter"]
