@@ -1,0 +1,15 @@
+function c {
+    & "C:\Users\TTTTT\AppData\Local\Programs\cursor\Cursor.exe" @args
+}
+Import-Module PSReadLine
+Set-PSReadLineOption -PredictionSource History
+Set-PSReadLineOption -PredictionViewStyle InlineView
+Set-PSReadLineOption -HistorySaveStyle SaveIncrementally
+if (-not $env:TMUX) {
+    tmux has-session 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        tmux new-session "pwsh -NoLogo -NoExit"
+    } else {
+        tmux attach
+    }
+}
