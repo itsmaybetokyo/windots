@@ -1,15 +1,19 @@
 function c {
     & "C:\Users\TTTTT\AppData\Local\Programs\cursor\Cursor.exe" @args
 }
+
 Import-Module PSReadLine
 Set-PSReadLineOption -PredictionSource History
 Set-PSReadLineOption -PredictionViewStyle InlineView
 Set-PSReadLineOption -HistorySaveStyle SaveIncrementally
+
 if (-not $env:TMUX) {
     tmux has-session 2>$null
     if ($LASTEXITCODE -ne 0) {
-        tmux new-session "pwsh -NoLogo -NoExit"
-    } else {
-        tmux attach
+        tmux new-session -d -s main -n "tokmac" "pwsh -NoExit -Command '. $PROFILE; cd ~/Downloads; python ./tokmac.py'"
+        tmux new-window -t main -n "btop" "pwsh -NoExit -Command '. $PROFILE; btop'"
+        tmux new-window -t main -n "discord" "wsl ~ -e bash -c 'cd /root/discord_bot && node src/index; exec bash'"
+        tmux select-window -t 0
     }
+    tmux attach -t main
 }
